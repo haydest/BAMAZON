@@ -5,24 +5,26 @@ var connection = mysql.createConnection({
   host: 'localhost',
   port: 3306,
   user: 'root',
-  database: 'bamazon'
+  password: 'noodles12',
+  database: 'bamazon_db'
 });
 
 homeScreen();
 
 function homeScreen() {
   console.log('Welcome to BAMAZON. Here is a table of our complete inventory.\n');
-  connection.query('SELECT * FROM products', function (err, resp) {
-    for (var i = 0; i < resp.length; i++) {
-      console.log(`${resp[i].id} - ${resp[i].itemname} || price: $${resp[i].price}.00 || quantity: ${resp[i].quant}`);
+  connection.query('SELECT * FROM products', function (err, res) {
+    if (err) throw err;
+    for (var i = 0; i < res.length; i++) {
+      console.log(`${res[i].item_id} - ${res[i].product_name} || price: $${res[i].price}.00 || quantity: ${res[i].stock_quantity}`);
     }
     
     inquirer.prompt([{
       type: 'input',
       name: 'itemid',
       message: 'What is the ID of the item you would like to purchase?',
-      validate: function (resp) {
-        if (isNaN(resp)) {
+      validate: function (res) {
+        if (isNaN(res)) {
           return false;
         }
           return true;
@@ -32,27 +34,27 @@ function homeScreen() {
       type: 'input',
       name: 'quantity',
       message: 'How many units of this item would you like to purchase?',
-      validate: function (resp) {
-        if (isNaN(resp)) {
+      validate: function (res) {
+        if (isNaN(res)) {
           return false;
         }
           return true;
       }
     }]).then(ans => {
-      validatePurchase(ans.itemid, ans.quantity);
+      validatePurchase(ans.item_id, ans.stock_quantity) ;
     })
   })
 };
 
-function validatePurchase(id, quantity) {
-  connection.query('SELECT itemname, quant FROM products WHERE ?', { id: id }, (err, resp) => {
+function validatePurchase(item_id, stock_quantity) {
+  connection.query('SELECT product_name, stock_quantity FROM products WHERE ?', { item_id: item_id }, (err, res) => {
 
-    var stockQuantity = resp[0].quant;
-    if (quantity <= stockQuantity) {
-      customerPurchase(id, quantity, stockQuantity);
+    var stockQuantity = res.stock_quantity;
+    if (stock_quantity <= stockQuantity) {
+      customerPurchase(item_id, stock_quantity);
     }
     else {
-      console.log(quantity, stockQuantity, 'Sorry, we don\'t have enough of that product in stock!');
+      console.log(res.stock_quantity, 'Sorry, we don\'t have enough of that product in stock!');
     }
   })
 };
@@ -62,12 +64,12 @@ function customerPurchase(x, y, z) {
 
   connection.query('UPDATE products SET ? WHERE ?', [
     {
-      quant: newStockQuantity
+      stock_quantity: newStockQuantity
     },
     {
-      id: x
+      item_id: x
     }
-  ], (err, resp) => {
+  ], (err, res) => {
     if (err) throw err;
     else {
       console.log('Your order has been placed!\n\nThank you for shopping at BAMAZON!');
@@ -77,8 +79,8 @@ function customerPurchase(x, y, z) {
   });
   if (newStockQuantity === 0) {
     connection.query('UPDATE products SET ? WHERE ?', [{
-      quant: 0
-    }], (err, resp) => {
+      stock_quantity: 0
+    }], (err, res) => {
       if (err) throw err;
     })
   }
