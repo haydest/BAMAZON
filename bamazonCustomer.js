@@ -11,8 +11,8 @@ var connection = mysql.createConnection({
 homeScreen();
 
 function homeScreen() {
+  console.log('Welcome to BAMAZON. Here is a table of our complete inventory.\n');
   connection.query('SELECT * FROM products', function (err, resp) {
-    console.log('Welcome to BAMAZON. Here is a table of our complete inventory.\n');
     for (var i = 0; i < resp.length; i++) {
       console.log(`${resp[i].id} - ${resp[i].itemname} || price: $${resp[i].price}.00 || quantity: ${resp[i].quant}`);
     }
